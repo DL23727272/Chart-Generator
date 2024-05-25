@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart Generator</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Chart Generator</h1>
+        <form id="chartForm">
+            <div class="form-group">
+                <label for="xValues">X Values (comma-separated)</label>
+                <input type="text" class="form-control" id="xValues" placeholder="Enter x values">
+            </div>
+            <div class="form-group">
+                <label for="yValues">Y Values (comma-separated)</label>
+                <input type="text" class="form-control" id="yValues" placeholder="Enter y values">
+            </div>
+            <div class="form-group">
+                <label for="chartType">Select Chart Type</label>
+                <select class="form-control" id="chartType">
+                    <option value="LineChart">Line</option>
+                    <option value="ScatterChart">Scatter</option>
+                    <option value="BarChart">Bar</option>
+                    <option value="PieChart">Pie</option>
+                    <option value="DoughnutChart">Doughnut</option>
+                    <option value="BubbleChart">Bubble</option>
+                    <option value="AreaChart">Area</option>
+                    <option value="ComboChart">Mixed</option>
+                    <!-- <option value="RadarChart">Radar</option> -->
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Generate Chart</button>
+        </form>
+
+        <div id="myChart" class="mt-5" style="width:100%;max-width:700px;height:500px;"></div>
+        
+    </div>
+
+    <script>
+        google.charts.load('current', {'packages':['corechart']});
+        document.getElementById('chartForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const xValues = document.getElementById('xValues').value.split(',').map(val => isNaN(val) ? val : Number(val));
+            const yValues = document.getElementById('yValues').value.split(',').map(Number);
+            const chartType = document.getElementById('chartType').value;
+            google.charts.setOnLoadCallback(function() {
+                generateChart(xValues, yValues, chartType);
+            });
+        });
+
+        function generateChart(xValues, yValues, chartType) {
+            const data = new google.visualization.DataTable();
+            data.addColumn('string', 'X Values');
+            data.addColumn('number', 'Y Values');
+            xValues.forEach((x, index) => data.addRow([String(x), yValues[index]]));
+
+            let options = {
+                title: 'Chart Generator',
+                hAxis: { title: 'X Values' },
+                vAxis: { title: 'Y Values' }
+            };
+
+            let chart;
+            switch(chartType) {
+                case 'ScatterChart':
+                    chart = new google.visualization.ScatterChart(document.getElementById('myChart'));
+                    options.legend = { position: 'none' };
+                    break;
+                case 'PieChart':
+                case 'DoughnutChart':
+                    chart = new google.visualization.PieChart(document.getElementById('myChart'));
+                    options.is3D = true;
+                    break;
+                case 'BubbleChart':
+                    chart = new google.visualization.BubbleChart(document.getElementById('myChart'));
+                    data.addColumn('number', 'Size');
+                    xValues.forEach((x, index) => data.setCell(index, 2, yValues[index])); 
+                    break;
+                case 'AreaChart':
+                    chart = new google.visualization.AreaChart(document.getElementById('myChart'));
+                    break;
+                case 'ComboChart':
+                    chart = new google.visualization.ComboChart(document.getElementById('myChart'));
+                    options.seriesType = 'line';
+                    options.series = { 1: { type: 'bars' } };
+                    data.addColumn('number', 'Y Values 2');
+                    xValues.forEach((x, index) => data.setCell(index, 2, yValues[index] + 10));
+                    break;
+                default:
+                    chart = new google.visualization[chartType](document.getElementById('myChart'));
+            }
+
+            chart.draw(data, options);
+        }
+    </script>
+</body>
+</html>
